@@ -3,8 +3,10 @@ name = "data-eng-interview"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = "0.12.5"
+csv = "1.3.0"
+env_logger = "0.11.5"
+log = "0.4.22"
 scraper = "0.19.1"
+ureq = "2.10.0"
