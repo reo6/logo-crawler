@@ -32,7 +32,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Output the result to stdout as CSV
     let mut wtr = Writer::from_writer(io::stdout());
 
-    wtr.write_record(&["Logo URL"])?;
     for url in result.logo_urls {
         wtr.write_record(&[url])?;
     }
