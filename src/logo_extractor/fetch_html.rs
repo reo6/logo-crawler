@@ -10,6 +10,7 @@ use std::time::Duration;
 
 // Keywords to identify potential logo images
 const LOGO_HINTS: [&str; 2] = ["logo", "brand"];
+const REQUEST_TIMEOUT: u64 = 4;
 
 fn ensure_https(url: &str) -> String {
     /// Ensuring that the url is valid.
@@ -45,7 +46,7 @@ pub fn fetch_potential_logo_urls(url: &str) -> Result<LogoListResponse, Box<dyn 
     info!("Fetching HTML content from: {}", url_with_https);
 
     let response = ureq::get(&url_with_https)
-        .timeout(Duration::from_secs(8))
+        .timeout(Duration::from_secs(REQUEST_TIMEOUT))
         .call()
         .map_err(|e| {
             error!("Failed to fetch URL {}: {}", url_with_https, e);
