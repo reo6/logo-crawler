@@ -9,6 +9,28 @@ use log::{info, error, warn, debug};
 use std::error::Error;
 
 
+fn ensure_https_scheme(url: &str) -> String {
+    if url.starts_with("http://") || url.starts_with("https://") {
+        url.to_string()
+    } else {
+        format!("https://{}", url)
+    }
+}
+
+fn resolve_relative_url(base_url: &str, relative_url: &str) -> String {
+    if relative_url.starts_with("http://") || relative_url.starts_with("https://") {
+        // If the relative_url is already an absolute URL, return it as-is
+        return relative_url.to_string();
+    }
+
+    let base_url = ensure_https_scheme(base_url);
+    let base_url_trimmed = base_url.trim_end_matches('/');
+    let relative_url_trimmed = relative_url.trim_start_matches('/');
+
+    // Combine base_url and relative_url, ensuring no double slashes
+    format!("{}/{}", base_url_trimmed, relative_url_trimmed)
+}
+
 fn extract_logo_url(url: &str) -> Result<Option<String>, Box<dyn Error>> {
     /// Same as the multiple extractor below, but it takes a single URL.
     /// `extract_logos_from_urls` utilizes this to do its work.
@@ -18,13 +40,19 @@ fn extract_logo_url(url: &str) -> Result<Option<String>, Box<dyn Error>> {
     // Fetch all potential candidates for logos and the favicon
     let logo_list_response = fetch_potential_logo_urls(url)?;
 
-    // Select the appropriate logo
-    let logo_url = select_logo_url(&logo_list_response.logos);
+    // Select the appropriate logo URL or favicon
+    let mut logo_url = select_logo_url(&logo_list_response.logos);
+    if logo_url.is_none() {
+        logo_url = logo_list_response.favicon;
+    }
 
-    // let final_url = logo_url.or(logo_list_response.favicon);
-    // This code can be used to return to favicon when a logo was not found.
+    // Resolve the URL if it is relative
+    if let Some(logo_url) = logo_url {
+        let resolved_url = resolve_relative_url(url, &logo_url);
+        return Ok(Some(resolved_url));
+    }
 
-    Ok(logo_url)
+    Ok(None)
 }
 
 pub struct ExtractionResult {
@@ -38,6 +66,7 @@ pub fn extract_logos_from_urls(urls: &[&str]) -> Result<ExtractionResult, Box<dy
     /// This takes multiple URLs and uses fetch_html to
     /// extract logo URL. This is the final point
     /// before main.
+
 
     let mut result = ExtractionResult {
         num_errors: 0,
@@ -57,7 +86,7 @@ pub fn extract_logos_from_urls(urls: &[&str]) -> Result<ExtractionResult, Box<dy
                 result.num_successful += 1;
             }
 
-            // In case it succeeded the request but failed to find a logo
+            // In case the request was successful but the algorithm failed to find a logo
             Ok(None) => {
                 result.num_not_found += 1;
                 warn!("No logo found for URL: {}", url);
