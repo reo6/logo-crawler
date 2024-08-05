@@ -183,6 +183,7 @@ dependencies = [
  "log",
  "scraper",
  "ureq",
+ "url",
 ]
 
 [[package]]
