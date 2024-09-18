@@ -1,5 +1,3 @@
-# Mixrank Data Engineering Submission
-
 ## How to run
 
 ``` shell
